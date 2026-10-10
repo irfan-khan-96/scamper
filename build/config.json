@@ -1,0 +1,6 @@
+{
+  "_help": "Read by build/pack.js. See the 'Launch settings' section of README.md. Every field may be null.",
+  "launch": null,
+  "site": null,
+  "analytics": null
+}

@@ -1,0 +1,14 @@
+# Build output — GitHub builds the site itself on every push
+/site/
+/Scamper.html
+
+# Local working material, never published
+/reference/
+/attic/
+/NOTES.md
+
+# Editor and system clutter
+.DS_Store
+Thumbs.db
+*.log
+node_modules/

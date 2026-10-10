@@ -1,0 +1,346 @@
+/* Scamper */
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{background:#100e0a;color:#f2ebdc;font-family:'Nunito Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden;-webkit-tap-highlight-color:transparent;}
+a{color:#e8b23c;} a:hover{color:#f4c95f;}
+
+.stage{
+  --tray-dark:#123a0b; --tray-hi:#7cc44a; --tray-lip:#1d5215; --w1:#3f8f24; --w2:#2a6717;
+  --g1:#9bd04e; --g2:#83bf3b; --g3:#68a52e;
+  --s1:#efdcd2; --s2:#dcc3b9; --s3:#c5a89e; --s-edge:#96786f; --s-crack:#ab8b82;
+  --c-back:#39701d; --c-mid:#53952a; --c-front:#6fb63a; --c-lit:#98d95c;
+  --mouse:#8d8378; --squirrel:#d1732a; --bird:#3f7fb5; --accent:#ffd24a; --red:#e2593c;
+  --panel:#211a12; --panel-2:#2b2218; --edge:#3b2f21; --text:#f2ebdc; --dim:#a99b83;
+}
+/* themes: the same board in three lights */
+.stage[data-palette="dusk"]{
+  --tray-dark:#0c1826; --tray-hi:#5b8fb8; --tray-lip:#16283a; --w1:#2a5473; --w2:#1b3a52;
+  --g1:#5f9a6e; --g2:#4a8259; --g3:#356343;
+  --s1:#d6dbe6; --s2:#bac2d2; --s3:#9fa8bb; --s-edge:#737c95; --s-crack:#8b93a8;
+  --c-back:#28513a; --c-mid:#376b4c; --c-front:#498760; --c-lit:#66a479;
+}
+.stage[data-palette="autumn"]{
+  --tray-dark:#3f240c; --tray-hi:#d59a4a; --tray-lip:#5c3a15; --w1:#8c5a22; --w2:#6b4218;
+  --g1:#d8bf5c; --g2:#c2a63f; --g3:#a1852b;
+  --s1:#eed3ba; --s2:#dbb99a; --s3:#c5a07f; --s-edge:#917059; --s-crack:#a8836a;
+  --c-back:#8a4a16; --c-mid:#a86220; --c-front:#c47c2c; --c-lit:#dd9c42;
+}
+.stage{height:100vh;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;padding:22px;background:radial-gradient(ellipse 70% 60% at 42% 32%,#241d14,#100e0a 72%);}
+.board-col{min-width:0;display:grid;place-items:center;}
+.board{width:min(100%,calc(100vh - 44px));aspect-ratio:1;border-radius:3.4%;box-shadow:0 26px 48px rgba(0,0,0,.55);}
+.board-svg{width:100%;height:100%;display:block;shape-rendering:geometricPrecision;user-select:none;-webkit-user-select:none;}
+.board-svg :focus-visible{outline:none;}
+
+/* ---------- stone slabs ---------- */
+.slab-edge{fill:var(--s-edge);}
+.slab-top{fill:url(#slabG);}
+.slab-rim{fill:none;stroke:#fff;stroke-opacity:.32;stroke-width:2.2;}
+.slab-crack{fill:none;stroke:var(--s-crack);stroke-width:2.4;stroke-linecap:round;opacity:.5;}
+.slab-specks circle{fill:var(--s-crack);opacity:.34;}
+.slab-wear{fill:#8a6a5e;opacity:.10;}
+.slab-sheen{fill:#fff;opacity:.10;}
+.slab-glyph,.slab-face{pointer-events:none;}
+.slab-bed .slab-rim,.slab-stump .slab-rim{stroke-opacity:.42;}
+.slab-ring{fill:none;stroke:none;stroke-width:5;opacity:0;will-change:opacity;}
+
+.slab-gate .slab-rim{stroke:var(--tint);stroke-opacity:1;stroke-width:4;}
+.slab-sc .slab-rim{stroke:#b8912a;stroke-opacity:.75;stroke-width:2.6;}
+.slab-stump .slab-rim{stroke:#2f6a15;stroke-opacity:.6;stroke-width:2.6;}
+.slab.is-open{cursor:pointer;}
+.slab.is-open .slab-ring{stroke:var(--accent);animation:ring 1.6s ease-in-out infinite;}
+.slab.is-open:hover .slab-top{filter:brightness(1.07);}
+.slab:focus-visible .slab-ring{stroke:#fff;opacity:1;animation:none;}
+.board-svg.no-hints .slab.is-open .slab-ring{opacity:.4;animation:none;}
+@keyframes ring{0%,100%{opacity:.45;}50%{opacity:1;}}
+.slab.is-target .slab-ring{stroke:#ffe57a;stroke-width:7;animation:ring .9s ease-in-out infinite;}
+/* stepping here walks straight into the cat */
+.slab.is-open.is-danger .slab-ring{stroke:#e2593c;stroke-width:6;}
+.slab.is-open.is-danger .slab-top{filter:saturate(1.1) brightness(1.02);}
+
+/* off-ring destination pads (on the tree, in the burrow) */
+.pad{cursor:pointer;}
+.pad-ring{fill:rgba(255,210,74,.14);stroke:var(--accent);stroke-width:5;animation:ring 1.6s ease-in-out infinite;will-change:opacity;}
+.pad.is-target .pad-ring{stroke:#ffe57a;stroke-width:7;}
+.pad:focus-visible .pad-ring{stroke:#fff;opacity:1;animation:none;}
+
+.burrows,.trails,.flights,.climbs{transition:opacity .3s;pointer-events:none;}
+/* animal tracks printed on the lawn */
+.track{pointer-events:none;}
+/* the bird's print is drawn with strokes, so these need a colour as well as a fill */
+.track-mouse{fill:#4a3520;color:#4a3520;opacity:.8;}
+.track-squirrel{fill:#25380a;color:#25380a;opacity:.86;}
+.track-bird{fill:#22384f;color:#22384f;opacity:.84;}
+.tile-pic{opacity:.95;}
+/* slabs painted in an animal's colour, where its trail leaves the path */
+.slab-paint{opacity:.85;}
+.mounds,.homes,.tree,.board-treats,.board-dice,.flow,.cat-run{pointer-events:none;}
+.home-halo{fill:none;stroke:currentColor;stroke-width:3;stroke-dasharray:6 9;opacity:.32;}
+
+/* the cat's stepping stones */
+.flag-cast{fill:#2f6415;opacity:.3;}
+.flag-edge{fill:var(--s-edge);}
+.flag-top{fill:url(#slabG);}
+.flag-rim{fill:none;stroke:#fff;stroke-opacity:.26;stroke-width:2;}
+.flag-crack{fill:none;stroke:var(--s-crack);stroke-width:2.2;stroke-opacity:.45;stroke-linecap:round;}
+
+/* treat cards laid out on the lawn */
+.bt{transition:opacity .45s ease,transform .45s ease;transform-box:fill-box;transform-origin:center;}
+.bt.is-spent{opacity:0;transform:scale(.55) rotate(24deg);}
+
+/* dice thrown on the lawn */
+.bd{transform-box:fill-box;transform-origin:center;}
+.bd.is-rolling{animation:toss .5s cubic-bezier(.45,0,.55,1) infinite;}
+@keyframes toss{0%{transform:translateY(0) scale(1) rotate(0);}30%{transform:translateY(-16px) scale(1.08) rotate(9deg);}60%{transform:translateY(0) scale(.96) rotate(-5deg);}100%{transform:translateY(0) scale(1) rotate(0);}}
+
+/* ---------- pieces: wooden standees ---------- */
+.pieces{pointer-events:none;}
+.piece{will-change:transform;}
+.piece-lift{transform-box:fill-box;transform-origin:50% 92%;will-change:transform,opacity;}
+.piece-cast{fill:rgba(16,44,6,.34);}
+.piece-fig .fig-body,.piece-fig .fig-tail{fill:currentColor;}
+.piece-fig .fig-edge{fill:#000;opacity:.22;}
+.piece-fig .fig-eye{fill:#fdf6e6;opacity:.9;}
+.piece-fig .fig-foot{fill:#000;opacity:.2;}
+.piece-fig .fig-beak{fill:#e8a33c;}
+.piece-sel{fill:none;stroke:none;stroke-width:4;}
+.piece-cat{color:#241f19;} .piece-cat .fig-eye{fill:#f6d96a;}
+.piece-mouse{color:#94897d;}
+.piece-squirrel{color:#d1732a;}
+.piece-bird{color:#3f7fb5;}
+.piece.is-sel .piece-sel{stroke:var(--accent);animation:ring 1.4s ease-in-out infinite;}
+.piece.is-safe{opacity:.82;}
+.piece-lift.is-pounce{animation:pounce .42s cubic-bezier(.3,1.5,.5,1);}
+@keyframes pounce{
+  0%{transform:scale(1);}
+  28%{transform:translateY(-10px) scale(1.22,.92);}
+  55%{transform:translateY(2px) scale(.9,1.12);}
+  100%{transform:scale(1);}
+}
+
+/* the burrow run: a mound shouldering along under the lawn, and the soil it throws */
+.digger{will-change:transform,opacity;transition:opacity .1s linear;pointer-events:none;}
+.dig-mound{fill:#8a6231;} .dig-cap{fill:#a1763b;}
+.dig-tip{fill:currentColor;opacity:.92;}
+.dig-clod{fill:#c09455;opacity:.75;}
+.dig-shadow{fill:rgba(16,44,6,.32);}
+.dig-spray circle{fill:#b08a4e;}
+.digger .dig-spray{animation:spray .34s ease-in-out infinite;}
+@keyframes spray{0%,100%{opacity:.22;transform:translateX(0) scale(.9);}50%{opacity:.7;transform:translateX(-6px) scale(1.1);}}
+
+/* soil erupting at a hole mouth */
+.burst{pointer-events:none;opacity:0;}
+.burst.is-on{animation:burstShow .66s linear forwards;}
+@keyframes burstShow{0%,92%{opacity:1;}100%{opacity:0;}}
+.burst-ring{fill:none;stroke:#a1763b;stroke-width:5;opacity:0;transform-box:fill-box;transform-origin:center;}
+.burst.is-on .burst-ring{animation:burstRing .5s ease-out;}
+@keyframes burstRing{0%{opacity:.8;transform:scale(.2);}100%{opacity:0;transform:scale(1.6);}}
+.burst-bit{fill:#8a6231;transform-box:fill-box;transform-origin:center;}
+.burst.is-on .burst-bit{animation:burstBit .6s cubic-bezier(.18,.72,.4,1) backwards;}
+@keyframes burstBit{
+  0%{transform:translate(calc(var(--bx) * -1),calc(var(--by) * -1)) scale(.3);opacity:1;}
+  55%{opacity:1;}
+  100%{transform:translate(0,20px) scale(.5);opacity:0;}
+}
+
+
+/* ---------- the red zone: where she pounces this turn ---------- */
+.slab-threat,.flag-threats{pointer-events:none;}
+.threat-fill{fill:var(--red);opacity:.42;}
+.slab-threat,.flag-threats,.slab-next,.pad-next{animation:fade .25s ease-out;}
+.threat-rim{fill:none;stroke:#ff7a5c;stroke-width:4;stroke-dasharray:9 7;}
+.threat-paw{color:#6e1a0e;opacity:.5;}
+@keyframes threat{0%,100%{opacity:.3;}50%{opacity:.52;}}
+/* where a critter goes if you tap it */
+.slab-next{pointer-events:none;}
+.slab-next circle{fill:rgba(255,255,255,.62);stroke:currentColor;stroke-width:4;stroke-dasharray:6 5;}
+.slab-next path{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;}
+.pad-next{pointer-events:none;}
+.pad-next .pad-ring{fill:rgba(255,255,255,.2);stroke:currentColor;stroke-dasharray:10 8;animation:none;}
+
+/* critters you can tap */
+.piece.is-tap{pointer-events:auto;cursor:pointer;}
+.piece-hit{fill:#fff;fill-opacity:0;}
+.piece.is-tap:hover .piece-fig{filter:brightness(1.12);}
+.piece-warn{fill:none;stroke:none;pointer-events:none;}
+.piece.is-warn .piece-warn{stroke:#ff5a3c;stroke-width:5;opacity:.9;}
+.piece.is-tap:focus-visible .piece-warn{stroke:#fff;stroke-width:4;animation:none;opacity:1;}
+.piece.is-stuck .piece-fig{opacity:.6;}
+
+/* the next treat card is a button while one can be spent */
+.board-treats.is-usable{pointer-events:auto;}
+.bt.is-live{cursor:pointer;}
+.bt.is-live rect:nth-of-type(2){stroke:#ffcf3a;stroke-width:5;}
+.bt.is-live:hover rect:nth-of-type(3){fill:#fffbe8;}
+
+/* words that rise where things happen */
+.floaters{pointer-events:none;}
+.floater-t{font-family:'Baloo 2',cursive;font-weight:800;font-size:46px;fill:#fff;paint-order:stroke;stroke:#1d1209;stroke-width:9px;stroke-linejoin:round;
+  transform-box:fill-box;transform-origin:center;animation:floatup 1.5s cubic-bezier(.2,.8,.3,1) forwards;}
+.floater-bad .floater-t{fill:#ff9478;}
+.floater-good .floater-t{fill:#b9f08e;}
+.floater-warn .floater-t{fill:#ffd24a;font-size:38px;}
+@keyframes floatfade{0%{opacity:0;}12%{opacity:1;}75%{opacity:1;}100%{opacity:0;}}
+@keyframes floatup{0%{opacity:0;transform:translateY(16px) scale(.7);}15%{opacity:1;transform:translateY(0) scale(1.08);}70%{opacity:1;}100%{opacity:0;transform:translateY(-46px) scale(1);}}
+
+/* ---------- the side panel ---------- */
+.rail{background:linear-gradient(#251d14,#1c1610);border:1px solid var(--edge);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:11px;min-height:0;overflow-y:auto;box-shadow:0 18px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);}
+.rail-top{display:flex;align-items:center;gap:8px;}
+.wordmark{display:flex;align-items:center;gap:11px;flex:1;min-width:0;}
+.wm-badge{width:44px;height:44px;flex:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));}
+.wm-text{min-width:0;}
+.wm-text h1{font-family:'Baloo 2',cursive;font-weight:800;font-size:27px;line-height:1;margin:0;letter-spacing:.02em;color:#f7f0e0;}
+.wm-text p{margin:2px 0 0;font-size:11.5px;font-weight:700;color:var(--dim);line-height:1.3;}
+
+.btn{font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;border-radius:11px;padding:10px 14px;transition:.13s;border:1px solid transparent;min-height:44px;}
+.btn-quiet{background:var(--panel-2);color:var(--text);border-color:var(--edge);}
+.btn-quiet:hover:not(:disabled){border-color:#5c4a33;background:#332818;}
+.btn-icon{background:var(--panel-2);color:var(--dim);border-color:var(--edge);width:44px;padding:0;display:grid;place-items:center;font-size:17px;flex:none;}
+.btn-icon:hover{color:var(--text);border-color:#5c4a33;}
+.btn:disabled{opacity:.38;cursor:not-allowed;}
+.btn:focus-visible,.crit:focus-visible,.mode:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.btn-primary{width:100%;font-family:'Baloo 2',cursive;font-weight:700;font-size:17px;padding:11px 18px;color:#2a1f0c;background:linear-gradient(#ffd85c,#eeb52c);box-shadow:0 4px 0 #b8842a,0 8px 18px rgba(238,181,44,.28);}
+.btn-primary:hover:not(:disabled){filter:brightness(1.05);}
+.btn-primary:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #b8842a;}
+
+/* daily / practice */
+.modes{display:flex;gap:6px;background:var(--panel);border:1px solid var(--edge);border-radius:13px;padding:4px;}
+.mode{flex:1;font-family:inherit;font-weight:800;font-size:13px;cursor:pointer;border:none;border-radius:9px;padding:9px 8px;min-height:40px;background:none;color:var(--dim);transition:.13s;}
+.mode:hover{color:var(--text);}
+.mode.is-on{background:#4a3a26;color:#ffd85c;}
+.mode-new{flex:0 0 auto;padding:9px 12px;color:#c9b892;}
+
+/* mood, par, streak */
+.info{display:flex;gap:6px;flex-wrap:wrap;}
+.info-chip{flex:1;white-space:nowrap;text-align:center;font-size:12.5px;font-weight:700;color:var(--dim);background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:7px 8px;}
+.info-chip b{color:#f7f0e0;font-weight:800;}
+.info-hot b{color:#ffb44a;}
+.info-friend b{color:#8ad274;}
+
+/* the turn */
+.turn{background:var(--panel-2);border:1px solid var(--edge);border-radius:16px;padding:13px 14px;transition:border-color .25s,box-shadow .25s;}
+.turn.is-danger{border-color:rgba(226,89,60,.75);box-shadow:inset 0 0 0 1px rgba(226,89,60,.35),0 0 22px rgba(226,89,60,.14);}
+.turn-top{display:flex;align-items:center;gap:12px;}
+.dice{display:flex;gap:6px;flex:none;}
+.die{width:40px;height:40px;border-radius:11px;background:linear-gradient(#ffe27a,#e3ad26);display:grid;place-items:center;box-shadow:0 3px 0 #a9811d,inset 0 2px 0 rgba(255,255,255,.4);transition:opacity .2s,transform .2s;}
+.die i{width:17px;height:17px;border-radius:50%;display:block;}
+.die-black i{background:#211d17;}
+.die-green i{background:#3d9b4c;box-shadow:inset 0 -2px 0 rgba(0,0,0,.2);}
+.die-blank i{background:rgba(0,0,0,.12);}
+.die.is-used{opacity:.32;transform:scale(.9);}
+.dice.is-rolling .die{animation:toss .5s cubic-bezier(.45,0,.55,1) infinite;}
+.dice.is-rolling .die:nth-child(2){animation-delay:.09s;}
+.turn-text{display:flex;flex-direction:column;min-width:0;flex:1;}
+.turn-text strong{font-family:'Baloo 2',cursive;font-weight:700;font-size:20px;line-height:1.15;color:#f7f0e0;}
+.turn-text span{font-size:12.5px;font-weight:700;color:var(--dim);line-height:1.35;min-height:1.35em;}
+.turn-n{align-self:flex-start;font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7f725c;white-space:nowrap;}
+.turn-btns{display:flex;gap:8px;margin-top:12px;}
+.turn-btns .btn{flex:1;}
+.btn-treat{flex:1.25;color:#2a1f0c;background:linear-gradient(#ffe7a3,#f0c766);box-shadow:0 3px 0 #b8902f;}
+.btn-treat:hover:not(:disabled){filter:brightness(1.05);}
+.btn-treat.is-hot{animation:hot 1s ease-in-out infinite;}
+@keyframes hot{0%,100%{box-shadow:0 3px 0 #b8902f,0 0 0 0 rgba(255,214,90,0);}50%{box-shadow:0 3px 0 #b8902f,0 0 0 6px rgba(255,214,90,.35);}}
+.treat-left{margin-left:6px;letter-spacing:2px;font-size:10px;opacity:.75;}
+
+/* the three critters */
+.critters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+.crit{font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px 9px;border-radius:14px;background:var(--panel);border:2px solid var(--edge);color:var(--text);transition:.13s;min-height:96px;}
+.crit:hover:not(:disabled){border-color:var(--c);background:color-mix(in oklch,var(--c) 14%,var(--panel));}
+.crit:active:not(:disabled){transform:scale(.97);}
+.crit:disabled{cursor:default;}
+.crit-name{font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:5px;}
+.crit-name em{font-style:normal;font-size:9.5px;font-weight:800;opacity:.45;border:1px solid currentColor;border-radius:4px;padding:0 4px;line-height:1.4;}
+.crit-note{font-size:11px;font-weight:800;color:var(--dim);text-align:center;line-height:1.25;}
+.crit.is-danger{border-color:var(--red);background:rgba(200,70,40,.16);}
+.crit.is-danger .crit-note{color:#ff9478;}
+.crit.is-risky .crit-note{color:#f0b070;}
+.crit.is-home{background:rgba(96,190,80,.14);border-color:rgba(96,190,80,.4);}
+.crit.is-home .crit-note{color:#8ad274;}
+.crit.is-gone{opacity:.45;}
+.crit:disabled:not(.is-home):not(.is-gone) .crit-name{opacity:.7;}
+
+/* first-game tips */
+.tip{display:flex;gap:10px;align-items:flex-start;background:#2f2914;border:1px solid #6d5c22;border-radius:14px;padding:11px 12px;animation:fade .25s;}
+.tip-i{font-size:17px;line-height:1.2;}
+.tip p{margin:0;flex:1;font-size:12.5px;font-weight:700;line-height:1.45;color:#f0e2c4;}
+.tip-x{font-family:inherit;font-weight:800;font-size:11.5px;cursor:pointer;border:1px solid #6d5c22;background:#3d3517;color:#ffd85c;border-radius:8px;padding:6px 9px;white-space:nowrap;min-height:40px;}
+
+/* ---------- modals ---------- */
+.scrim{position:fixed;inset:0;background:rgba(10,8,5,.72);backdrop-filter:blur(4px);display:grid;place-items:center;z-index:60;padding:18px;animation:fade .2s;}
+@keyframes fade{from{opacity:0;}}
+.modal{background:linear-gradient(#292014,#1e1810);border:1px solid #4a3a26;border-radius:22px;padding:28px 28px 24px;box-shadow:0 26px 70px rgba(0,0,0,.6);position:relative;max-height:92vh;overflow:auto;width:100%;}
+.modal h2{font-family:'Baloo 2',cursive;font-weight:800;font-size:27px;margin:0 0 8px;color:#f9f2e2;line-height:1.15;}
+.modal-x{position:absolute;top:8px;right:10px;background:none;border:none;font-size:30px;line-height:1;color:var(--dim);cursor:pointer;width:44px;height:44px;}
+.modal-x:hover{color:#f7f0e0;}
+.act-btns{display:flex;gap:8px;margin-top:10px;} .act-btns .btn{flex:1;}
+.k-an{color:#8ad274;} .k-red{color:#ff8a6a;}
+
+.modal-help{max-width:440px;}
+.help{margin:6px 0 20px;padding-left:18px;}
+.help li{font-size:14px;font-weight:700;color:#d6c9ae;line-height:1.5;margin-bottom:8px;}
+.help li b{color:#f3e6c8;}
+
+.modal-end{max-width:400px;text-align:center;}
+.end-stars{display:flex;justify-content:center;gap:6px;margin:4px 0 2px;}
+.end-stars span{font-size:46px;line-height:1;color:#4a3d29;display:inline-block;}
+.end-stars span.is-on{color:#ffd24a;text-shadow:0 0 18px rgba(255,210,74,.55);animation:pop .5s cubic-bezier(.3,1.6,.5,1) backwards;}
+.end-stars span.is-on:nth-child(2){animation-delay:.15s;} .end-stars span.is-on:nth-child(3){animation-delay:.3s;}
+@keyframes pop{from{transform:scale(.2);opacity:0;}}
+.end-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:12px 0 14px;}
+.end-row span{display:flex;align-items:center;gap:6px;padding:5px 10px 5px 6px;border-radius:12px;font-weight:800;font-size:12.5px;background:rgba(255,255,255,.05);}
+.end-row .ok{background:rgba(96,190,80,.18);color:#8ad274;}
+.end-row .no{background:rgba(200,90,60,.16);color:#e0937a;}
+.end-par{margin:0 0 4px;font-size:15px;font-weight:800;color:#f0e2c4;}
+.end-friend{margin:0 0 4px;font-size:14px;font-weight:800;color:#8ad274;}
+.end-meta{margin:0 0 16px;font-size:12.5px;font-weight:700;color:var(--dim);}
+.end-note{margin:9px 0 0;font-size:12.5px;font-weight:800;color:#8ad274;}
+.modal-end .btn-primary{margin-top:6px;}
+
+.modal-set{max-width:380px;}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+.set-row>span{font-size:14px;font-weight:800;color:#ddd0b6;}
+.set-hint{display:block;font-style:normal;font-size:11.5px;font-weight:700;color:var(--dim);margin-top:2px;line-height:1.35;}
+.modal-set .btn-primary{margin-top:18px;}
+.sw{width:48px;height:28px;border-radius:14px;background:#3b2f21;border:none;cursor:pointer;position:relative;transition:.18s;padding:0;flex:none;}
+.sw i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#8a7d67;transition:.18s;}
+.sw.is-on{background:#5c7d33;} .sw.is-on i{left:23px;background:#e9f5d8;}
+.seg{display:flex;gap:4px;background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:3px;}
+.seg-b{font-family:inherit;font-size:12px;font-weight:800;text-transform:capitalize;cursor:pointer;border:none;background:none;color:var(--dim);padding:7px 10px;border-radius:7px;min-height:34px;transition:.13s;}
+.seg-b:hover{color:var(--text);}
+.seg-b.is-on{background:#4a3a26;color:#ffd85c;}
+.link-btn{display:block;margin:12px auto 0;background:none;border:none;color:var(--dim);font:inherit;font-size:12.5px;font-weight:800;text-decoration:underline;cursor:pointer;padding:8px;min-height:36px;}
+.link-btn:hover{color:var(--text);}
+.share-text{width:100%;margin:6px 0 4px;padding:10px;border-radius:10px;border:1px solid var(--edge);background:rgba(0,0,0,.25);color:var(--text);font:600 13px/1.5 ui-monospace,Consolas,monospace;resize:none;}
+
+/* ---------- phones and narrow windows ---------- */
+@media(max-width:900px){
+  body{overflow:auto;}
+  .stage{grid-template-columns:minmax(0,1fr);height:auto;min-height:100vh;gap:9px;padding:10px 10px 18px;}
+  /* the panel comes apart so the board sits between the header and the controls */
+  .rail{display:contents;}
+  .rail-top{order:1;} .modes{order:2;} .info{order:3;} .board-col{order:4;}
+  /* the critters are the controls, so they sit right under the board */
+  .critters{order:5;} .turn{order:6;} .tip{order:7;} .rail>.btn-primary{order:8;}
+  .board{width:min(100%,56vh);}
+  .wm-text h1{font-size:23px;} .wm-badge{width:38px;height:38px;}
+  .info-chip{padding:6px;}
+  .crit{min-height:78px;padding:8px 4px 7px;}
+  .modal{padding:24px 18px 20px;}
+}
+@media(max-width:380px){
+  .wm-text p{display:none;}
+  .turn-text strong{font-size:18px;}
+  .die{width:34px;height:34px;}
+}
+/* Reduce motion, from the settings — the player's switch and nothing else */
+.stage.is-calm .piece.is-warn .piece-warn,.stage.is-calm .btn-treat.is-hot,.stage.is-calm .dice.is-rolling .die,
+.stage.is-calm .bd.is-rolling,.stage.is-calm .digger .dig-spray,.stage.is-calm .burst.is-on .burst-bit,
+.stage.is-calm .burst.is-on .burst-ring,.stage.is-calm .slab-threat,.stage.is-calm .flag-threats,
+.stage.is-calm .slab-next,.stage.is-calm .piece-lift.is-pounce{animation:none;}
+/* still said, just not flown */
+.stage.is-calm .floater-t{animation-name:floatfade;}
+
+/* shut in the cage: still plainly itself, just out of the game and standing in
+   shade rather than sunlight */
+.piece.is-caught{opacity:.94;}
+.piece.is-caught .piece-fig{filter:saturate(.8) brightness(.9);}
+.piece.is-caught .piece-cast{opacity:.22;}

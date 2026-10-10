@@ -1,0 +1,6 @@
+# Same line endings on every machine, so Windows and GitHub's build agree
+* text=auto eol=lf
+*.woff2 binary
+*.jpg binary
+*.png binary
+vendor/fonts/* binary
