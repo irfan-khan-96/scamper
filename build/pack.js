@@ -134,7 +134,7 @@ const iconSvg = asset('icon.svg');
 const card = CONFIG.site && asset('card.jpg');
 const touch = CONFIG.site && asset('icon-180.png');
 const head = [
-  '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+  '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">',
   `<title>${esc(TITLE)}</title>`,
   `<meta name="description" content="${esc(DESC)}">`,
   `<meta property="og:title" content="${esc(TITLE)}">`,

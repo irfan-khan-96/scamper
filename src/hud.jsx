@@ -2,8 +2,12 @@
    which critter to tap, and how the day is going. */
 const HG = window.MG;
 
-function Wordmark() {
+/* The title. On a phone the tagline gives way to a one-line summary of the
+   day — mood, par, streak — so those don't need a row of their own and the
+   board gets the room instead. */
+function Wordmark({ g, par, streak }) {
   const N = HG.NAMES;
+  const m = g ? window.MR.MOODS[g.mood] : null;
   return (
     <div className="wordmark">
       <svg viewBox="0 0 46 46" className="wm-badge" aria-hidden="true">
@@ -12,7 +16,13 @@ function Wordmark() {
       </svg>
       <div className="wm-text">
         <h1>{N.game}</h1>
-        <p>{N.tagline}</p>
+        <p className="wm-tag">{N.tagline}</p>
+        {m ? (
+          <p className="wm-day">
+            {m.emoji} {m.label} · Par <b>{par == null ? '…' : par}</b> ·{' '}
+            {g.mode === 'challenge' && g.target != null ? <>Friend <b>{g.target}</b></> : <>🔥 <b>{streak}</b></>}
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -92,6 +102,7 @@ function TurnPanel({ g, rolling, danger, onTreat, onStay }) {
     sub = canTreat ? `${cat} moves 2. Throw her a treat, or brace.` : `${cat} moves 2. Brace!`;
   } else { head = `${cat}'s turn`; sub = ' '; }
 
+  const live = g.phase === 'move' && !rolling;
   /* green dice are spent left to right as you step */
   const spent = Math.max(0, d.green - g.moves);
   let usedGreen = 0;
@@ -110,17 +121,19 @@ function TurnPanel({ g, rolling, danger, onTreat, onStay }) {
         </div>
         <span className="turn-n">Turn {g.turn}</span>
       </div>
-      {g.phase === 'move' && !rolling ? (
-        <div className="turn-btns">
-          <button className={'btn btn-treat' + (canTreat && danger ? ' is-hot' : '')} disabled={!canTreat} onClick={onTreat}
-            title={g.cat === HG.BED ? `${cat} is already in her basket` : `Send ${cat} back to her basket`}>
-            🐟 Treat <span className="treat-left">{'●'.repeat(g.treats)}{'○'.repeat(Math.max(0, R.MOODS[g.mood].treats - g.treats))}</span>
-          </button>
-          <button className="btn btn-quiet" onClick={onStay}>
-            {g.moves > 0 ? 'Stay put' : 'Let her come'}
-          </button>
-        </div>
-      ) : null}
+      {/* Always here, greyed out when they cannot be used. They used to vanish
+          while the dice rolled and the cat moved, and every turn the panel
+          shrank and grew again and pushed the page about. */}
+      <div className="turn-btns">
+        <button className={'btn btn-treat' + (live && canTreat && danger ? ' is-hot' : '')}
+          disabled={!live || !canTreat} onClick={onTreat}
+          title={g.cat === HG.BED ? `${cat} is already in her basket` : `Send ${cat} back to her basket`}>
+          🐟 Treat <span className="treat-left">{'●'.repeat(g.treats)}{'○'.repeat(Math.max(0, R.MOODS[g.mood].treats - g.treats))}</span>
+        </button>
+        <button className="btn btn-quiet" disabled={!live} onClick={onStay}>
+          {live && g.moves === 0 ? 'Let her come' : 'Stay put'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -139,9 +152,10 @@ function CritterBar({ g, threat, onStep, live }) {
         let note;
         if (home) note = 'Home ★';
         else if (gone) note = 'Caught';
-        else if (why === 'cat') note = `${HG.NAMES.cat}'s in the way`;
+        /* every note fits one line, so a button never grows mid-game */
+        else if (why === 'cat') note = 'Blocked';
         else if (inZone) note = 'In danger!';
-        else if (intoZone) note = 'Steps into danger';
+        else if (intoZone) note = 'Into danger';
         else note = HG.stepsToHome(g.animals[id], id) + ' to go';
         const cls = ['crit'];
         if (home) cls.push('is-home');
@@ -258,6 +272,9 @@ function SettingsCard({ t, setT, onClose, onPrivacy }) {
           </div>
         </div>
         <Sw t={t} setT={setT} k="sound" label="Sound" />
+        {typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function' ? (
+          <Sw t={t} setT={setT} k="buzz" label="Vibration" hint="A short buzz when a critter is caught or gets home." />
+        ) : null}
         <Sw t={t} setT={setT} k="calm" label="Reduce motion" hint="Pieces jump instead of walking, and nothing tumbles or pops." />
         {window.MT.configured ? (
           <Sw t={t} setT={setT} k="stats" label="Anonymous stats" hint="Counts like “a garden finished with 2 stars”. Nothing that identifies you." />

@@ -1,6 +1,10 @@
 /* Scamper */
 *{box-sizing:border-box;}
 html,body{height:100%;margin:0;}
+/* a tap is a tap: no double-tap zoom, no pull-to-refresh or rubber-banding
+   mid-game, no text selection or long-press menus when a finger lingers */
+html{touch-action:manipulation;-webkit-text-size-adjust:100%;}
+html,body{overscroll-behavior:none;}
 body{background:#100e0a;color:#f2ebdc;font-family:'Nunito Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden;-webkit-tap-highlight-color:transparent;}
 a{color:#e8b23c;} a:hover{color:#f4c95f;}
 
@@ -26,10 +30,17 @@ a{color:#e8b23c;} a:hover{color:#f4c95f;}
   --c-back:#8a4a16; --c-mid:#a86220; --c-front:#c47c2c; --c-lit:#dd9c42;
 }
 .stage{height:100vh;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;padding:22px;background:radial-gradient(ellipse 70% 60% at 42% 32%,#241d14,#100e0a 72%);}
-.board-col{min-width:0;display:grid;place-items:center;}
+.board-col{min-width:0;min-height:0;display:grid;place-items:center;}
+@supports (container-type:size){
+  .board-col{container-type:size;width:100%;height:100%;}
+}
 .board{width:min(100%,calc(100vh - 44px));aspect-ratio:1;border-radius:3.4%;box-shadow:0 26px 48px rgba(0,0,0,.55);}
 .board-svg{width:100%;height:100%;display:block;shape-rendering:geometricPrecision;user-select:none;-webkit-user-select:none;}
 .board-svg :focus-visible{outline:none;}
+@supports (container-type:size){ .board{width:min(100cqw,100cqh);} }
+.stage{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+.wm-day{display:none;}
+.wm-day b{color:#f7f0e0;}
 
 /* ---------- stone slabs ---------- */
 .slab-edge{fill:var(--s-edge);}
@@ -230,8 +241,10 @@ a{color:#e8b23c;} a:hover{color:#f4c95f;}
 .dice.is-rolling .die{animation:toss .5s cubic-bezier(.45,0,.55,1) infinite;}
 .dice.is-rolling .die:nth-child(2){animation-delay:.09s;}
 .turn-text{display:flex;flex-direction:column;min-width:0;flex:1;}
-.turn-text strong{font-family:'Baloo 2',cursive;font-weight:700;font-size:20px;line-height:1.15;color:#f7f0e0;}
-.turn-text span{font-size:12.5px;font-weight:700;color:var(--dim);line-height:1.35;min-height:1.35em;}
+.turn-text strong{font-family:'Baloo 2',cursive;font-weight:700;font-size:20px;line-height:1.15;color:#f7f0e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* always two lines tall, whatever the message, so the panel never grows */
+.turn-text span{font-size:12.5px;font-weight:700;color:var(--dim);line-height:1.35;height:2.7em;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .turn-n{align-self:flex-start;font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7f725c;white-space:nowrap;}
 .turn-btns{display:flex;gap:8px;margin-top:12px;}
 .turn-btns .btn{flex:1;}
@@ -249,7 +262,10 @@ a{color:#e8b23c;} a:hover{color:#f4c95f;}
 .crit:disabled{cursor:default;}
 .crit-name{font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:5px;}
 .crit-name em{font-style:normal;font-size:9.5px;font-weight:800;opacity:.45;border:1px solid currentColor;border-radius:4px;padding:0 4px;line-height:1.4;}
-.crit-note{font-size:11px;font-weight:800;color:var(--dim);text-align:center;line-height:1.25;}
+.crit-note{font-size:11px;font-weight:800;color:var(--dim);text-align:center;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+/* the result button stands where the critters stood, at their height */
+.critters-over{display:flex;min-height:96px;}
+.critters-over .btn-primary{height:auto;}
 .crit.is-danger{border-color:var(--red);background:rgba(200,70,40,.16);}
 .crit.is-danger .crit-note{color:#ff9478;}
 .crit.is-risky .crit-note{color:#f0b070;}
@@ -309,28 +325,102 @@ a{color:#e8b23c;} a:hover{color:#f4c95f;}
 .seg-b.is-on{background:#4a3a26;color:#ffd85c;}
 .link-btn{display:block;margin:12px auto 0;background:none;border:none;color:var(--dim);font:inherit;font-size:12.5px;font-weight:800;text-decoration:underline;cursor:pointer;padding:8px;min-height:36px;}
 .link-btn:hover{color:var(--text);}
-.share-text{width:100%;margin:6px 0 4px;padding:10px;border-radius:10px;border:1px solid var(--edge);background:rgba(0,0,0,.25);color:var(--text);font:600 13px/1.5 ui-monospace,Consolas,monospace;resize:none;}
+.share-text{-webkit-user-select:text;user-select:text;width:100%;margin:6px 0 4px;padding:10px;border-radius:10px;border:1px solid var(--edge);background:rgba(0,0,0,.25);color:var(--text);font:600 13px/1.5 ui-monospace,Consolas,monospace;resize:none;}
 
 /* ---------- phones and narrow windows ---------- */
-@media(max-width:900px){
-  body{overflow:auto;}
-  .stage{grid-template-columns:minmax(0,1fr);height:auto;min-height:100vh;gap:9px;padding:10px 10px 18px;}
-  /* the panel comes apart so the board sits between the header and the controls */
+/* ---------- phones held upright: one fixed screen ----------
+   Nothing scrolls. A slim header, the board, then the controls in thumb
+   reach. Every row has a fixed height and the board takes whatever is left,
+   so nothing on screen moves as the game goes on — and with no scrolling the
+   browser's address bar never slides in or out to resize things either. */
+@media(max-width:900px) and (orientation:portrait){
+  html,body{height:100%;overflow:hidden;}
+  .stage{position:fixed;inset:0;height:auto;overflow:hidden;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto auto minmax(0,1fr) auto auto;
+    gap:6px;
+    padding:max(6px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right))
+      max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));}
   .rail{display:contents;}
-  .rail-top{order:1;} .modes{order:2;} .info{order:3;} .board-col{order:4;}
-  /* the critters are the controls, so they sit right under the board */
-  .critters{order:5;} .turn{order:6;} .tip{order:7;} .rail>.btn-primary{order:8;}
-  .board{width:min(100%,56vh);}
-  .wm-text h1{font-size:23px;} .wm-badge{width:38px;height:38px;}
-  .info-chip{padding:6px;}
-  .crit{min-height:78px;padding:8px 4px 7px;}
+  /* everything in the one column, placed explicitly: left to itself the grid
+     sets an overlapping tip in a new column beside the board, and squeezes
+     the whole screen to make room for it */
+  .rail-top,.modes,.board-col,.critters,.turn,.tip{grid-column:1;}
+  .rail-top{grid-row:1;height:42px;}
+  .modes{grid-row:2;}
+  .info{display:none;}
+  .board-col{grid-row:3;}
+  .critters{grid-row:4;} .turn{grid-row:5;}
+  /* tips float over the top of the board instead of pushing anything down */
+  .tip{grid-row:3;align-self:start;z-index:5;margin:6px 8px 0;box-shadow:0 12px 28px rgba(0,0,0,.5);}
+  .board{width:min(100%,calc(100vh - 300px));}
+  @supports (container-type:size){ .board{width:min(100cqw,100cqh);} }
+
+  .wm-badge{width:34px;height:34px;}
+  .wm-text h1{font-size:21px;}
+  .wm-tag{display:none;}
+  .wm-day{display:block;margin:1px 0 0;font-size:11.5px;font-weight:700;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .btn-icon{width:40px;height:40px;min-height:40px;}
+  .modes{padding:3px;border-radius:12px;}
+  .mode{min-height:34px;padding:6px 8px;font-size:12.5px;}
+
+  .crit{height:58px;min-height:0;display:grid;grid-template-columns:30px minmax(0,1fr);grid-template-rows:auto auto;
+    column-gap:7px;row-gap:0;align-content:center;justify-items:start;padding:6px 8px;text-align:left;}
+  .crit svg{grid-row:1 / span 2;width:30px;height:30px;}
+  .crit-name{font-size:12.5px;}
+  .crit-name em{display:none;}
+  .crit-note{font-size:10.5px;text-align:left;}
+  .critters-over{min-height:0;height:58px;}
+
+  .turn{padding:9px 10px;border-radius:14px;}
+  .turn-top{gap:9px;}
+  .die{width:34px;height:34px;border-radius:9px;}
+  .die i{width:14px;height:14px;}
+  .turn-text strong{font-size:16.5px;}
+  .turn-text span{font-size:11.5px;}
+  .turn-n{font-size:9.5px;}
+  .turn-btns{margin-top:8px;gap:6px;}
+  .turn-btns .btn{min-height:40px;padding:7px 10px;font-size:12.5px;}
   .modal{padding:24px 18px 20px;}
 }
-@media(max-width:380px){
-  .wm-text p{display:none;}
-  .turn-text strong{font-size:18px;}
-  .die{width:34px;height:34px;}
+@media(max-width:900px) and (orientation:portrait) and (max-height:600px){
+  /* small phones: a little tighter still, so the board keeps its share */
+  .rail-top{height:38px;}
+  .crit{height:52px;} .critters-over{height:52px;}
+  .turn-btns .btn{min-height:38px;}
 }
+
+/* ---------- phones turned sideways: board left, controls right ---------- */
+@media(orientation:landscape) and (max-height:540px){
+  html,body{height:100%;overflow:hidden;}
+  .stage{position:fixed;inset:0;height:auto;grid-template-columns:minmax(0,1fr) 330px;gap:10px;
+    padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right))
+      max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));}
+  .board{width:min(100%,calc(100vh - 16px));}
+  @supports (container-type:size){ .board{width:min(100cqw,100cqh);} }
+  .rail{padding:10px;gap:7px;border-radius:16px;overflow:hidden;}
+  /* the same compact controls as upright, critters first, day summary in the
+     header — all of it fits beside the board without scrolling */
+  .wm-tag,.info{display:none;}
+  .wm-day{display:block;margin:1px 0 0;font-size:11px;font-weight:700;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .wm-badge{width:32px;height:32px;} .wm-text h1{font-size:20px;}
+  .btn-icon{width:38px;height:38px;min-height:38px;}
+  .modes{padding:3px;} .mode{min-height:32px;padding:5px 8px;font-size:12px;}
+  .critters{order:1;} .turn{order:2;} .tip{order:3;}
+  .crit{height:52px;min-height:0;display:grid;grid-template-columns:28px minmax(0,1fr);grid-template-rows:auto auto;
+    column-gap:6px;align-content:center;justify-items:start;padding:5px 7px;text-align:left;}
+  .crit svg{grid-row:1 / span 2;width:28px;height:28px;}
+  .crit-name{font-size:12px;} .crit-name em{display:none;}
+  .crit-note{font-size:10px;text-align:left;}
+  .critters-over{min-height:0;height:52px;}
+  .turn{padding:8px 9px;}
+  .die{width:30px;height:30px;border-radius:8px;} .die i{width:12px;height:12px;}
+  .turn-top{gap:8px;}
+  .turn-text strong{font-size:15px;} .turn-text span{font-size:11px;}
+  .turn-n{display:none;}
+  .turn-btns{margin-top:7px;gap:6px;} .turn-btns .btn{min-height:38px;padding:6px 8px;font-size:12px;}
+}
+
 /* Reduce motion, from the settings — the player's switch and nothing else */
 .stage.is-calm .piece.is-warn .piece-warn,.stage.is-calm .btn-treat.is-hot,.stage.is-calm .dice.is-rolling .die,
 .stage.is-calm .bd.is-rolling,.stage.is-calm .digger .dig-spray,.stage.is-calm .burst.is-on .burst-bit,

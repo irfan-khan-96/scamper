@@ -11,7 +11,7 @@ const { useState, useEffect, useRef, useMemo, useCallback } = React;
 const G = window.MG, R = window.MR, S = window.Sound, D = window.MD, AI = window.MAI;
 const NAMES = G.NAMES;
 
-const SET_DEFAULTS = { v: 3, sound: true, calm: false, theme: 'meadow', stats: true };
+const SET_DEFAULTS = { v: 3, sound: true, calm: false, theme: 'meadow', stats: true, buzz: true };
 const THEMES = ['meadow', 'dusk', 'autumn'];
 /* "Reduce motion" is the player's own switch, off unless they turn it on.
 
@@ -94,6 +94,11 @@ function App() {
 
   const reduce = !!t.calm;
   const cue = useCallback((n) => { if (t.sound) S.play(n); }, [t.sound]);
+  /* a short buzz on phones that can (Android; iPhones ignore it) */
+  const buzz = useCallback((pattern) => {
+    if (!t.buzz || typeof navigator.vibrate !== 'function') return;
+    try { navigator.vibrate(pattern); } catch (e) { /* not allowed yet: fine */ }
+  }, [t.buzz]);
   useEffect(() => { S.enabled = t.sound; D.save('settings', t); }, [t]);
   useEffect(() => { storeGame(g); }, [g]);
   const setTweak = useCallback((k, v) => setT((p) => Object.assign({}, p, { [k]: v })), []);
@@ -152,6 +157,7 @@ function App() {
         setG(next);
         if (caughtNow.length) {
           cue('pounce');
+          buzz([45, 60, 45]);
           float(caughtNow.length > 1 ? `Gotcha ×${caughtNow.length}!` : 'Gotcha!', after.cat || p1, 'bad');
         }
         if (!caughtNow.length || reduce) { finish(); return; }
@@ -174,7 +180,7 @@ function App() {
         });
       },
     });
-  }, [g, reduce, cue, float]);
+  }, [g, reduce, cue, float, buzz]);
 
   /* ---- a new turn: the dice tumble, then the red zone appears ---- */
   const lastTurn = useRef(g.turn);
@@ -255,11 +261,11 @@ function App() {
     animate(n, id, ev.from, ev.to, {
       route: { kind, d: ev.d },
       then: () => {
-        if (ev.home) { cue('home'); float('Home!', G.nodePos(ev.to), 'good'); }
+        if (ev.home) { cue('home'); buzz(25); float('Home!', G.nodePos(ev.to), 'good'); }
         else if (ev.cut) float('Shortcut!', G.nodePos(ev.to), 'plain');
       },
     });
-  }, [g, canAct, animate, cue, float, seeTip]);
+  }, [g, canAct, animate, cue, float, seeTip, buzz]);
 
   const treat = useCallback(() => {
     if (!canAct || !R.canTreat(g)) return;
@@ -408,7 +414,7 @@ function App() {
 
       <aside className="rail">
         <div className="rail-top">
-          <Wordmark />
+          <Wordmark g={g} par={par} streak={streak} />
           <button className="btn btn-icon" onClick={() => setModal('help')} aria-label="How to play" title="How to play">?</button>
           <button className="btn btn-icon" onClick={() => setModal('settings')} aria-label="Settings" title="Settings">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2">
@@ -420,11 +426,16 @@ function App() {
         <ModeTabs g={g} onDaily={toDaily} onPractice={toPractice} onNew={newPractice} />
         <InfoStrip g={g} par={par} streak={streak} />
         <TurnPanel g={g} rolling={rolling} danger={inDanger.length > 0} onTreat={treat} onStay={stay} />
-        <CritterBar g={g} threat={threat} onStep={step} live={canAct} />
+        {/* when the garden is over its result button takes the critters' place,
+            at the same height, instead of adding a row underneath */}
+        {g.phase === 'over' ? (
+          <div className="critters critters-over">
+            <button className="btn btn-primary" onClick={() => setEndOpen(true)}>See result</button>
+          </div>
+        ) : (
+          <CritterBar g={g} threat={threat} onStep={step} live={canAct} />
+        )}
         <Tip tip={tip} onDone={() => seeTip(tip)} />
-        {g.phase === 'over' && !endOpen ? (
-          <button className="btn btn-primary" onClick={() => setEndOpen(true)}>See result</button>
-        ) : null}
       </aside>
 
       {endOpen && g.phase === 'over' ? (
