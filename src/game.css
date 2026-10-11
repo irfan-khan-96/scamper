@@ -35,6 +35,8 @@ a{color:#e8b23c;} a:hover{color:#f4c95f;}
   .board-col{container-type:size;width:100%;height:100%;}
 }
 .board{width:min(100%,calc(100vh - 44px));aspect-ratio:1;border-radius:3.4%;box-shadow:0 26px 48px rgba(0,0,0,.55);}
+.board{position:relative;}
+.board-live{position:absolute;inset:0;pointer-events:none;will-change:transform;}
 .board-svg{width:100%;height:100%;display:block;shape-rendering:geometricPrecision;user-select:none;-webkit-user-select:none;}
 .board-svg :focus-visible{outline:none;}
 @supports (container-type:size){ .board{width:min(100cqw,100cqh);} }
@@ -219,6 +221,18 @@ a{color:#e8b23c;} a:hover{color:#f4c95f;}
 .mode:hover{color:var(--text);}
 .mode.is-on{background:#4a3a26;color:#ffd85c;}
 .mode-new{flex:0 0 auto;padding:9px 12px;color:#c9b892;}
+.mode-menu{display:none;position:relative;flex:none;}
+.mode-btn{min-height:40px;padding:0 12px;background:var(--panel-2);color:#ffd85c;border-color:var(--edge);font-size:13px;}
+.mode-btn span{font-size:10px;margin-left:2px;opacity:.8;}
+.menu-scrim{position:fixed;inset:0;z-index:40;}
+.menu{position:absolute;top:calc(100% + 6px);right:0;z-index:41;min-width:210px;display:flex;flex-direction:column;
+  background:linear-gradient(#2c2318,#211a12);border:1px solid #4a3a26;border-radius:14px;padding:6px;
+  box-shadow:0 18px 40px rgba(0,0,0,.55);animation:fade .15s;}
+.menu button{font-family:inherit;font-size:14px;font-weight:800;text-align:left;color:var(--text);background:none;border:none;
+  border-radius:9px;padding:11px 12px;min-height:44px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;}
+.menu button:hover,.menu button:focus-visible{background:rgba(255,255,255,.06);outline:none;}
+.menu button.is-on{color:#ffd85c;}
+.menu button em{font-style:normal;font-weight:700;color:var(--dim);}
 
 /* mood, par, streak */
 .info{display:flex;gap:6px;flex-wrap:wrap;}
@@ -264,7 +278,7 @@ a{color:#e8b23c;} a:hover{color:#f4c95f;}
 .crit-name em{font-style:normal;font-size:9.5px;font-weight:800;opacity:.45;border:1px solid currentColor;border-radius:4px;padding:0 4px;line-height:1.4;}
 .crit-note{font-size:11px;font-weight:800;color:var(--dim);text-align:center;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 /* the result button stands where the critters stood, at their height */
-.critters-over{display:flex;min-height:96px;}
+.critters-over{display:flex;align-items:center;min-height:96px;}
 .critters-over .btn-primary{height:auto;}
 .crit.is-danger{border-color:var(--red);background:rgba(200,70,40,.16);}
 .crit.is-danger .crit-note{color:#ff9478;}
@@ -329,15 +343,15 @@ a{color:#e8b23c;} a:hover{color:#f4c95f;}
 
 /* ---------- phones and narrow windows ---------- */
 /* ---------- phones held upright: one fixed screen ----------
-   Nothing scrolls. A slim header, the board, then the controls in thumb
-   reach. Every row has a fixed height and the board takes whatever is left,
-   so nothing on screen moves as the game goes on — and with no scrolling the
-   browser's address bar never slides in or out to resize things either. */
+   Nothing scrolls and nothing moves. One slim header, the board as big as the
+   screen allows, and a single dock at the bottom: what the dice said, then
+   Treat and Stay, then the three critters nearest the thumb, because those are
+   what gets tapped most. */
 @media(max-width:900px) and (orientation:portrait){
   html,body{height:100%;overflow:hidden;}
   .stage{position:fixed;inset:0;height:auto;overflow:hidden;
     grid-template-columns:minmax(0,1fr);
-    grid-template-rows:auto auto minmax(0,1fr) auto auto;
+    grid-template-rows:auto minmax(0,1fr) auto auto;
     gap:6px;
     padding:max(6px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right))
       max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));}
@@ -345,34 +359,33 @@ a{color:#e8b23c;} a:hover{color:#f4c95f;}
   /* everything in the one column, placed explicitly: left to itself the grid
      sets an overlapping tip in a new column beside the board, and squeezes
      the whole screen to make room for it */
-  .rail-top,.modes,.board-col,.critters,.turn,.tip{grid-column:1;}
-  .rail-top{grid-row:1;height:42px;}
-  .modes{grid-row:2;}
-  .info{display:none;}
-  .board-col{grid-row:3;}
-  .critters{grid-row:4;} .turn{grid-row:5;}
+  .rail-top,.board-col,.critters,.turn,.tip{grid-column:1;}
+  .rail-top{grid-row:1;height:44px;}
+  .modes,.info{display:none;}
+  .mode-menu{display:block;}
+  /* the board runs to the edges of the screen */
+  .board-col{grid-row:2;margin:0 -8px;width:calc(100% + 16px);}
+  .turn{grid-row:3;} .critters{grid-row:4;}
   /* tips float over the top of the board instead of pushing anything down */
-  .tip{grid-row:3;align-self:start;z-index:5;margin:6px 8px 0;box-shadow:0 12px 28px rgba(0,0,0,.5);}
-  .board{width:min(100%,calc(100vh - 300px));}
+  .tip{grid-row:2;align-self:start;z-index:5;margin:6px 8px 0;box-shadow:0 12px 28px rgba(0,0,0,.5);}
+  .board{width:min(100%,calc(100vh - 250px));border-radius:6px;overflow:hidden;box-shadow:none;}
   @supports (container-type:size){ .board{width:min(100cqw,100cqh);} }
+  /* The box's wooden wall is trimmed to a sliver: both layers are drawn a
+     tenth larger than the board and the edge is cut off. The garden itself
+     comes out about ten per cent bigger, for nothing. */
+  .board .board-svg{position:absolute;left:-4.82%;top:-4.82%;width:109.65%;height:109.65%;}
 
-  .wm-badge{width:34px;height:34px;}
+  .wm-badge{display:none;}
   .wm-text h1{font-size:21px;}
   .wm-tag{display:none;}
   .wm-day{display:block;margin:1px 0 0;font-size:11.5px;font-weight:700;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .btn-icon{width:40px;height:40px;min-height:40px;}
-  .modes{padding:3px;border-radius:12px;}
-  .mode{min-height:34px;padding:6px 8px;font-size:12.5px;}
 
-  .crit{height:58px;min-height:0;display:grid;grid-template-columns:30px minmax(0,1fr);grid-template-rows:auto auto;
-    column-gap:7px;row-gap:0;align-content:center;justify-items:start;padding:6px 8px;text-align:left;}
-  .crit svg{grid-row:1 / span 2;width:30px;height:30px;}
-  .crit-name{font-size:12.5px;}
-  .crit-name em{display:none;}
-  .crit-note{font-size:10.5px;text-align:left;}
-  .critters-over{min-height:0;height:58px;}
-
-  .turn{padding:9px 10px;border-radius:14px;}
+  /* the dock: one panel, two parts */
+  .turn{padding:9px 10px 8px;border-radius:16px 16px 0 0;border-bottom:none;}
+  .critters,.critters-over{margin-top:-6px;padding:0 10px 10px;background:var(--panel-2);
+    border:1px solid var(--edge);border-top:none;border-radius:0 0 16px 16px;}
+  .turn.is-danger{box-shadow:inset 0 0 0 1px rgba(226,89,60,.35);}
   .turn-top{gap:9px;}
   .die{width:34px;height:34px;border-radius:9px;}
   .die i{width:14px;height:14px;}
@@ -381,12 +394,23 @@ a{color:#e8b23c;} a:hover{color:#f4c95f;}
   .turn-n{font-size:9.5px;}
   .turn-btns{margin-top:8px;gap:6px;}
   .turn-btns .btn{min-height:40px;padding:7px 10px;font-size:12.5px;}
+
+  .crit{height:58px;min-height:0;display:grid;grid-template-columns:30px minmax(0,1fr);grid-template-rows:auto auto;
+    column-gap:7px;row-gap:0;align-content:center;justify-items:start;padding:6px 8px;text-align:left;}
+  .crit svg{grid-row:1 / span 2;width:30px;height:30px;}
+  .crit-name{font-size:12.5px;}
+  .crit-name em{display:none;}
+  .crit-note{font-size:10.5px;text-align:left;}
+  /* the critters row and the result button share one exact height (58px of
+     button + 10px padding + 1px border), so the end of a game moves nothing */
+  .critters,.critters-over{height:69px;min-height:0;}
+  .critters-over{display:flex;align-items:stretch;}
   .modal{padding:24px 18px 20px;}
 }
 @media(max-width:900px) and (orientation:portrait) and (max-height:600px){
   /* small phones: a little tighter still, so the board keeps its share */
-  .rail-top{height:38px;}
-  .crit{height:52px;} .critters-over{height:52px;}
+  .rail-top{height:40px;}
+  .crit{height:52px;} .critters,.critters-over{height:63px;}
   .turn-btns .btn{min-height:38px;}
 }
 

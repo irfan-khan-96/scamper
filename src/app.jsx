@@ -65,7 +65,23 @@ const dropHash = () => {
 const DUR = { step: 360, route: 1000, carry: 1550 };
 const CUE = { step: 'step', walk: 'step', scamper: 'step', tunnel: 'dig', flight: 'fly', climb: 'climb', snap: 'treat' };
 
+/* is this a phone held upright? (the same test the stylesheet uses) */
+const PHONE = '(max-width: 900px) and (orientation: portrait)';
+function usePhone() {
+  const test = () => { try { return window.matchMedia(PHONE).matches; } catch (e) { return false; } };
+  const [on, setOn] = useState(test);
+  useEffect(() => {
+    let m;
+    try { m = window.matchMedia(PHONE); } catch (e) { return undefined; }
+    const f = () => setOn(m.matches);
+    if (m.addEventListener) m.addEventListener('change', f); else m.addListener(f);
+    return () => { if (m.removeEventListener) m.removeEventListener('change', f); else m.removeListener(f); };
+  }, []);
+  return on;
+}
+
 function App() {
+  const phone = usePhone();
   const [t, setT] = useState(loadSettings);
   const [g, setG] = useState(initialGame);
   const [busy, setBusy] = useState(false);
@@ -396,7 +412,6 @@ function App() {
             <FlagThreat threat={threat} />
             <BoardTreats left={g.treats} total={R.MOODS[g.mood].treats}
               usable={canAct && R.canTreat(g)} onUse={treat} />
-            <BoardDice faces={faces} rolling={rolling} />
             <Stones highlights={[]} target={null} danger={g.cat} onPick={() => {}}
               threat={threat} nexts={nexts} />
             <HomeRunLayer show kinds={['climb']} cls="climbs" />
@@ -405,7 +420,16 @@ function App() {
             <TreeHomes />
             <HomeRunLayer show kinds={['flight']} cls="flights" />
             <NextPads nexts={nexts} />
-            <Pieces g={g} hold={carry} onTap={taps} warn={warn} stuck={stuck} label={labels} />
+          </svg>
+          {/* Everything that moves lives on its own layer above the board.
+              The board is a couple of thousand shapes, gradients and clips; it
+              now changes at most once a turn, and the browser keeps it as a
+              finished picture while the pieces, dice and words move over it —
+              instead of redrawing the whole garden on every frame of every
+              move, which is what made mid-range phones stutter. */}
+          <svg viewBox="0 0 1000 1000" className="board-svg board-live" aria-label="Pieces">
+            <BoardDice faces={faces} rolling={rolling} />
+            <Pieces g={g} hold={carry} onTap={taps} warn={warn} stuck={stuck} label={labels} k={phone ? 1.22 : 1} />
             <CageBars />
             <Floaters items={floaters} />
           </svg>
@@ -415,6 +439,7 @@ function App() {
       <aside className="rail">
         <div className="rail-top">
           <Wordmark g={g} par={par} streak={streak} />
+          <ModeMenu g={g} onDaily={toDaily} onPractice={toPractice} onNew={newPractice} />
           <button className="btn btn-icon" onClick={() => setModal('help')} aria-label="How to play" title="How to play">?</button>
           <button className="btn btn-icon" onClick={() => setModal('settings')} aria-label="Settings" title="Settings">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2">

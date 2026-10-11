@@ -62,6 +62,35 @@ function ModeTabs({ g, onDaily, onPractice, onNew }) {
   );
 }
 
+/* The same three choices as the tabs, folded into one small button for the
+   phone header, so daily/practice doesn't need a row of its own. The list
+   opens over the board and pushes nothing. */
+function ModeMenu({ g, onDaily, onPractice, onNew }) {
+  const [open, setOpen] = React.useState(false);
+  const D = window.MD;
+  const label = g.mode === 'daily' ? 'Daily' : g.mode === 'challenge' ? 'Challenge' : 'Practice';
+  const pick = (fn) => () => { setOpen(false); fn(); };
+  return (
+    <div className="mode-menu">
+      <button className="btn mode-btn" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
+        {label} <span aria-hidden="true">▾</span>
+      </button>
+      {open ? (
+        <>
+          <div className="menu-scrim" onClick={() => setOpen(false)} />
+          <div className="menu" role="menu">
+            <button role="menuitemradio" aria-checked={g.mode === 'daily'} className={g.mode === 'daily' ? 'is-on' : ''}
+              onClick={pick(onDaily)}>Today's garden <em>{D.dayLabel(D.today())}</em></button>
+            <button role="menuitemradio" aria-checked={g.mode !== 'daily'} className={g.mode !== 'daily' ? 'is-on' : ''}
+              onClick={pick(onPractice)}>{g.mode === 'challenge' ? 'Challenge' : 'Practice'}</button>
+            <button role="menuitem" onClick={pick(onNew)}>New practice garden</button>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 /* mood, par, streak — the three numbers a day is about */
 function InfoStrip({ g, par, streak }) {
   const m = window.MR.MOODS[g.mood];
@@ -350,5 +379,5 @@ function ShareFallback({ text, onClose }) {
 }
 
 Object.assign(window, {
-  Wordmark, Face, ModeTabs, InfoStrip, TurnPanel, CritterBar, Tip, HelpCard, PrivacyCard, SettingsCard, EndCard, ShareFallback,
+  Wordmark, Face, ModeTabs, ModeMenu, InfoStrip, TurnPanel, CritterBar, Tip, HelpCard, PrivacyCard, SettingsCard, EndCard, ShareFallback,
 });

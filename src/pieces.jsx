@@ -346,7 +346,10 @@ const Motion = (() => {
 /* A critter you can move is a button: tap it and it takes one step. One in
    the red zone wears a warning ring; one that cannot move (its next step is
    onto the cat) is dimmed rather than hidden, so the reason is visible. */
-function Piece({ id, x, y, s, sel, safe, caught, tap, warn, stuck, label }) {
+/* `k` makes a piece bigger without moving it: on a phone the pieces are drawn
+   about a fifth larger, tap area included, scaled about their feet so they
+   still stand on their slabs. */
+function Piece({ id, x, y, s, sel, safe, caught, tap, warn, stuck, label, k }) {
   const ref = React.useRef(null);
   React.useEffect(() => { Motion.register(id, ref.current); return () => Motion.register(id, null); }, [id]);
   const f = FIG[id];
@@ -363,7 +366,8 @@ function Piece({ id, x, y, s, sel, safe, caught, tap, warn, stuck, label }) {
   } : {};
   return (
     <g ref={ref} className={cls.join(' ')} style={{ transform: `translate(${x}px,${y}px)` }} {...act}>
-      {tap ? <circle className="piece-hit" cx="0" cy="-18" r={s < 0.95 ? 30 : 40} /> : null}
+      <g className="piece-size" transform={k && k !== 1 && !caught ? `scale(${k})` : undefined}>
+      {tap ? <circle className="piece-hit" cx="0" cy="-18" r={s < 0.95 ? 34 : 46} /> : null}
       <circle className="piece-warn" cx="0" cy="-16" r={f.w * 0.62 * s} />
       <g className="piece-lift">
         <ellipse className="piece-cast" cx={f.w * 0.13} cy="3" rx={f.w * 0.52} ry={f.w * 0.17} />
@@ -377,6 +381,7 @@ function Piece({ id, x, y, s, sel, safe, caught, tap, warn, stuck, label }) {
           {(f.eye || []).map((e, i) => <circle key={i} className="fig-eye" cx={e[0]} cy={e[1]} r="2.4" />)}
           <ellipse className="fig-foot" cx={f.w * 0.06} cy="0" rx={f.w * 0.3} ry="3" />
         </g>
+      </g>
       </g>
     </g>
   );
@@ -425,7 +430,7 @@ function SoilBurst() {
   );
 }
 
-function Pieces({ g, selected, hold, onTap, warn, stuck, label }) {
+function Pieces({ g, selected, hold, onTap, warn, stuck, label, k }) {
   const pos = layout(g, hold);
   /* farther up the board draws first, so nearer pieces overlap correctly;
      the cat always stands in front of whatever she has cornered */
@@ -443,7 +448,7 @@ function Pieces({ g, selected, hold, onTap, warn, stuck, label }) {
           sel={selected === id} safe={!!g.home[id]} caught={!!pos[id].caught}
           tap={onTap && onTap[id] ? onTap[id] : null}
           warn={!!(warn && warn[id])} stuck={!!(stuck && stuck[id])}
-          label={label ? label[id] : undefined} />
+          label={label ? label[id] : undefined} k={k} />
       ))}
     </g>
   );
