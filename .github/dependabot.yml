@@ -1,0 +1,24 @@
+# Keeps the actions in .github/workflows up to date. Once a month, GitHub
+# opens one pull request that moves every pinned action to its newest release
+# (commit and version comment both). Merging it publishes the site as usual.
+#
+# Releases younger than two weeks are left alone, so a bad or hijacked
+# release has time to be caught before it reaches this repository.
+#
+# The libraries copied into vendor/ (React, Babel) are not covered: Dependabot
+# only reads package manifests, and the build has none. Those are updated by
+# hand.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 14
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+    open-pull-requests-limit: 2
